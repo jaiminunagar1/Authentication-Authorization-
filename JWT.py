@@ -17,15 +17,18 @@ ALGORITHM = os.getenv("ALGORITHM")
 
 def create_access_token(payload: dict, secret_key: str, algorithm: str):
 
-    to_encode = payload.copy()
-    
-    expire = datetime.utcnow() + timedelta(minutes=30)
-    to_encode.update({"exp": expire})
+    try:
+        to_encode = payload.copy()
+        
+        expire = datetime.utcnow() + timedelta(minutes=30)
+        to_encode.update({"exp": expire})
 
-    print ("Payload to encode:", to_encode)
+        print ("Payload to encode:", to_encode)
 
-    return jwt.encode(to_encode, secret_key, algorithm=algorithm)
-
+        return jwt.encode(to_encode, secret_key, algorithm=algorithm)
+    except Exception as e:
+        print("Error creating access token:", e)
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
 class LoginRequest(BaseModel):
@@ -43,12 +46,13 @@ async def login(request: LoginRequest):
 
     payload_username = request.username
     payload_password = request.password
-
-    if payload_username == "admin" and payload_password == "Admin@123":
-        payload = {"sub": payload_username}
-        token = create_access_token(payload, SECRET_KEY, ALGORITHM)
-        return TokenResponse(access_token=token, token_type="bearer")
-    raise HTTPException(status_code=401, detail="Invalid credentials")
+    try:
+        if payload_username == "admin" and payload_password == "Admin@123":
+            payload = {"sub": payload_username}
+            token = create_access_token(payload, SECRET_KEY, ALGORITHM)
+            return TokenResponse(access_token=token, token_type="bearer")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
 
 
 security = HTTPBearer()
