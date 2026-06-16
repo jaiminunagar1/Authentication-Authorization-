@@ -2,3 +2,5 @@ Why delta table
 why we use sceret key
 why token type barear what is the meaning of barear
 http vs https
+Why Depends
+Security vs Dependsbacause we can use Depends instead of Security then why we use Security

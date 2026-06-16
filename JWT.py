@@ -1,6 +1,6 @@
-from jose import jwt,JWTError
+from jose import ExpiredSignatureError, jwt,JWTError
 from datetime import datetime, timedelta
-from fastapi import HTTPException, FastAPI,Depends
+from fastapi import HTTPException, FastAPI,Depends , Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 import uvicorn
@@ -58,7 +58,7 @@ async def login(request: LoginRequest):
 security = HTTPBearer()
 
 def verify_token(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    credentials: HTTPAuthorizationCredentials = Security(security)
 ):  
     schema = credentials.scheme
     token = credentials.credentials
@@ -70,15 +70,18 @@ def verify_token(
             SECRET_KEY,
             algorithms=[ALGORITHM]
         )
-
         return payload
 
+    except ExpiredSignatureError:
+        raise HTTPException(
+            status_code=401,
+            detail="Token has expired"
+        )
     except JWTError:
         raise HTTPException(
             status_code=401,
             detail="Invalid token"
         )
-    
 
 @app.get("/employees")
 def get_employees(
